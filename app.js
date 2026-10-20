@@ -167,7 +167,7 @@ function calculateStock(assetNumber, callback) {
     };
 }
 
-// 📥 ورود از اکسل
+// 📥 ورود از اکسل (نسخه هوشمند)
 function importExcel(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -179,17 +179,43 @@ function importExcel(event) {
         try {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
-            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            
+            // گرفتن اولین شیت
+            const firstSheetName = workbook.SheetNames[0]; 
+            const worksheet = workbook.Sheets[firstSheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             
             let headerRow = -1;
-            for (let i = 0; i < jsonData.length; i++) {
-                if (jsonData[i] && jsonData[i][3] && jsonData[i][3].toString().includes('شماره دارايي')) {
-                    headerRow = i; break;
+            let colAssetNumber = 3; 
+            let colDate = 6;
+            let colReceiver = 8;
+            let colLocation = 9;
+            let colCategory = 0;
+
+            // پیدا کردن هوشمندانه ردیف هدر و ستون‌ها
+            for (let i = 0; i < Math.min(jsonData.length, 30); i++) {
+                const row = jsonData[i];
+                if (!row) continue;
+                const rowString = row.join(' ');
+                
+                if (rowString.includes('دارايي') || rowString.includes('دارایی') || rowString.includes('پلاک')) {
+                    headerRow = i;
+                    
+                    for (let j = 0; j < row.length; j++) {
+                        const cell = row[j] ? row[j].toString().trim() : '';
+                        if (cell.includes('دارايي') || cell.includes('دارایی')) colAssetNumber = j;
+                        if (cell.includes('خريد') || cell.includes('خرید')) colDate = j;
+                        if (cell.includes('گيرنده') || cell.includes('گیرنده')) colReceiver = j;
+                        if (cell.includes('استقرار')) colLocation = j;
+                        if (cell.includes('طبقه')) colCategory = j;
+                    }
+                    break;
                 }
             }
 
-            if (headerRow === -1) return statusEl.innerHTML = '<p style="color:red;">❌ ردیف هدر پیدا نشد.</p>';
+            if (headerRow === -1) {
+                return statusEl.innerHTML = '<p style="color:red;">❌ ردیف هدر پیدا نشد. مطمئن شوید ستون «شماره دارایی» در فایل وجود دارد.</p>';
+            }
 
             const transaction = db.transaction(["assets"], "readwrite");
             const store = transaction.objectStore("assets");
@@ -198,7 +224,8 @@ function importExcel(event) {
             for (let i = headerRow + 1; i < jsonData.length; i++) {
                 const row = jsonData[i];
                 if (!row || row.length < 4) continue;
-                const assetNumber = row[3] ? row[3].toString().trim() : '';
+                
+                const assetNumber = row[colAssetNumber] ? row[colAssetNumber].toString().trim() : '';
                 if (!assetNumber) continue;
 
                 let name = assetNumber;
@@ -208,10 +235,10 @@ function importExcel(event) {
                 store.put({
                     assetNumber: assetNumber,
                     name: name,
-                    category: row[0] ? row[0].toString().trim() : '',
-                    location: row[9] ? row[9].toString().trim() : '',
-                    receiver: row[8] ? row[8].toString().trim() : '',
-                    purchaseDate: row[6] ? row[6].toString().trim() : ''
+                    category: row[colCategory] ? row[colCategory].toString().trim() : '',
+                    location: row[colLocation] ? row[colLocation].toString().trim() : '',
+                    receiver: row[colReceiver] ? row[colReceiver].toString().trim() : '',
+                    purchaseDate: row[colDate] ? row[colDate].toString().trim() : ''
                 });
                 insertedCount++;
             }
@@ -222,6 +249,7 @@ function importExcel(event) {
                 document.getElementById('excel-input').value = '';
             };
         } catch (error) {
+            console.error(error);
             statusEl.innerHTML = '<p style="color:red;">❌ خطا در خواندن فایل اکسل.</p>';
         }
     };
@@ -370,4 +398,4 @@ function clearAllData() {
     tx.objectStore("assets").clear();
     tx.objectStore("transactions").clear();
     tx.oncomplete = function() { alert('✅ پاک شد.'); showPage('home-page'); };
-}
+                    }
