@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت اموال و انبار</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#1976D2">
+</head>
+<body>
+
+    <!-- صفحه اصلی -->
+    <div id="home-page" class="page active">
+        <header class="header">
+            <h1>📦 مدیریت اموال و انبار</h1>
+        </header>
+        <div class="welcome">
+            <p>سلام، کاربر گرامی 👋</p>
+            <p class="date">امروز: <span id="today-date">-</span></p>
+        </div>
+        <div class="menu-grid">
+            <div class="menu-card green" onclick="showPage('list-page')">
+                <div class="icon">📋</div><h3>کالاها و اموال</h3><p>لیست کامل</p>
+            </div>
+            <div class="menu-card blue" onclick="showPage('inbound-page')">
+                <div class="icon">📥</div><h3>ورود به انبار</h3><p>ثبت ورود</p>
+            </div>
+            <div class="menu-card red" onclick="showPage('outbound-page')">
+                <div class="icon">📤</div><h3>خروج از انبار</h3><p>ثبت خروج</p>
+            </div>
+            <div class="menu-card purple" onclick="showPage('inventory-page')">
+                <div class="icon">📦</div><h3>موجودی انبار</h3><p>گزارش موجودی</p>
+            </div>
+            <div class="menu-card indigo" onclick="showPage('persons-page')">
+                <div class="icon">👥</div><h3>افراد</h3><p>تحویل‌گیرندگان</p>
+            </div>
+            <div class="menu-card orange" onclick="showPage('reports-page')">
+                <div class="icon">📊</div><h3>گزارش‌ها</h3><p>آمار و نمودار</p>
+            </div>
+            <div class="menu-card teal" onclick="showPage('import-page')">
+                <div class="icon">📁</div><h3>ورود/خروجی اکسل</h3><p>Import / Export</p>
+            </div>
+            <div class="menu-card pink" onclick="showPage('settings-page')">
+                <div class="icon">⚙️</div><h3>تنظیمات</h3><p>پشتیبان‌گیری</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- لیست کالاها -->
+    <div id="list-page" class="page">
+        <header class="header">
+            <button onclick="showPage('home-page')">→</button>
+            <h2>کالاها و اموال</h2>
+            <span id="list-count" class="badge">0</span>
+        </header>
+        <div class="search-bar">
+            <input type="text" id="list-search" placeholder="🔍 جستجو..." oninput="filterList()">
+        </div>
+        <div id="list-container" class="list-container"></div>
+    </div>
+
+    <!-- ورود به انبار -->
+    <div id="inbound-page" class="page">
+        <header class="header">
+            <button onclick="showPage('home-page')">→</button>
+            <h2>ثبت ورود کالا</h2>
+        </header>
+        <div class="form-container">
+            <label>تاریخ ورود</label>
+            <input type="text" id="in-date">
+            <label>کالا</label>
+            <select id="in-asset"></select>
+            <label>تعداد</label>
+            <input type="number" id="in-qty" min="1">
+            <label>شماره فاکتور</label>
+            <input type="text" id="in-invoice">
+            <label>تحویل‌دهنده</label>
+            <input type="text" id="in-receiver">
+            <label>توضیحات</label>
+            <textarea id="in-desc" rows="2"></textarea>
+            <button class="btn-green" onclick="submitInbound()">✅ ثبت ورود</button>
+        </div>
+    </div>
+
+    <!-- خروج از انبار -->
+    <div id="outbound-page" class="page">
+        <header class="header">
+            <button onclick="showPage('home-page')">→</button>
+            <h2>ثبت خروج کالا</h2>
+        </header>
+        <div class="form-container">
+            <label>تاریخ خروج</label>
+            <input type="text" id="out-date">
+            <label>کالا</label>
+            <select id="out-asset" onchange="updateOutStock()"></select>
+            <p id="out-stock" class="stock-info">موجودی فعلی: -</p>
+            <label>تعداد</label>
+            <input type="number" id="out-qty" min="1">
+            <label>شماره فاکتور</label>
+            <input type="text" id="out-invoice">
+            <label>تحویل‌گیرنده</label>
+            <input type="text" id="out-receiver">
+            <label>توضیحات</label>
+            <textarea id="out-desc" rows="2"></textarea>
+            <button class="btn-red" onclick="submitOutbound()">✅ ثبت خروج</button>
+        </div>
+    </div>
+
+    <!-- موجودی انبار -->
+    <div id="inventory-page" class="page">
+        <header class="header">
+            <button onclick="showPage('home-page')">→</button>
+            <h2>موجودی انبار</h2>
+        </header>
+        <div class="search-bar">
+            <input type="text" id="inv-search" placeholder="🔍 جستجو..." oninput="loadInventory()">
+        </div>
+        <div id="inventory-container" class="list-container"></div>
+    </div>
+
+    <!-- افراد -->
+    <div id="persons-page" class="page">
+        <header class="header">
+            <button onclick="showPage('home-page')">→</button>
+            <h2>افراد (تحویل‌گیرندگان)</h2>
+        </header>
+        <div class="search-bar">
+            <input type="text" id="person-search" placeholder="🔍 جستجوی نام..." oninput="filterPersons()">
+        </div>
+        <div id="persons-container" class="list-container"></div>
+    </div>
+
+    <!-- گزارش‌ها -->
+    <div id="reports-page" class="page">
+        <header class="header">
+            <button onclick="showPage('home-page')">→</button>
+            <h2>گزارش‌ها</h2>
+        </header>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div id="category-stats" class="list-container"></div>
+    </div>
+
+    <!-- ورود/خروجی اکسل -->
+    <div id="import-page" class="page">
+        <header class="header">
+            <button onclick="showPage('home-page')">→</button>
+            <h2>ورود / خروجی اکسل</h2>
+        </header>
+        <div class="form-container">
+            <h3>📥 وارد کردن اکسل</h3>
+            <p class="hint">فایل اکسل کالاها رو انتخاب کن:</p>
+            
+            <!-- دکمه استاندارد و رفع باگ انتخاب فایل -->
+            <input type="file" id="excel-input" accept=".xlsx,.xls" onchange="importExcel(event)" style="display:none;">
+            <label for="excel-input" style="display:block; text-align:center; background-color:#1976D2; color:white; padding:14px; border-radius:10px; cursor:pointer; font-weight:bold; margin-top:10px;">
+                📁 انتخاب فایل اکسل از گوشی
+            </label>
+            
+            <div id="import-status" style="margin-top:15px;"></div>
+
+            <hr>
+
+            <h3>📤 خروجی گرفتن</h3>
+            <button class="btn-blue" onclick="exportToExcel()">📊 دانلود گزارش کامل (Excel)</button>
+            <button class="btn-green" onclick="exportInventoryCSV()">📄 خروجی موجودی (CSV)</button>
+
+            <hr>
+
+            <button class="btn-red" onclick="clearAllData()">🗑️ پاک کردن کل داده‌ها</button>
+        </div>
+    </div>
+
+    <!-- تنظیمات -->
+    <div id="settings-page" class="page">
+        <header class="header">
+            <button onclick="showPage('home-page')">→</button>
+            <h2>تنظیمات</h2>
+        </header>
+        <div class="form-container">
+            <h3>درباره برنامه</h3>
+            <p>مدیریت اموال و انبار</p>
+            <p>نسخه ۱.۰.۰</p>
+            <hr>
+            <h3>نصب روی گوشی</h3>
+            <p class="hint">در مرورگر Chrome، منوی سه نقطه → «Add to Home screen» رو بزن تا اپ روی صفحه اصلی نصب بشه.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
